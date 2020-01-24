@@ -3,7 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width">
+
+
   <title>dasHSTAT</title>
+  <!-- Digital Application Summary: HSTAT -->
 
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <link href="https://fonts.googleapis.com/css?family=Oswald&display=swap" rel="stylesheet">
@@ -12,17 +15,156 @@
 
   <style>
 
+    body {
+      background-color: black;
+      color: white;
+    }
+
+    h1 {
+      font-family: 'Oswald', sans-serif;
+      text-align: center;
+      font-size: 100px;
+      margin: 20px;
+    }
+
+    #dashstat{
+      font-weight: 700;
+    }
+
+    #speedtest {
+      /*width: 603px;
+      height: 229px;*/
+      height: 400px;
+    }
+
+    #talker {
+      width: 603px;
+      height: 229px;
+    }
+
+    .tile {
+      text-align: center;
+      margin: 20px auto;
+      border: none;
+    }
+
+    iframe {
+      border: 0;
+    }
+
   </style>
 
 </head>
 <body>
 
+  <div class="row">
+
+    <div class="col-md-4 tile">
+      <h1 id="dashstat">dasHSTAT</h1>
+    </div>
+
+    <div class="col-md-4 tile">
+      <h1 id="date">Friday</h1>
+    </div>
+
+    <div class="col-md-4 tile">
+      <h1 id="time">12:00pm</h1>
+    </div>
+
+  </div>
+
+  <div class="row">
+
+    <div class="col-md-6 tile">
+      <iframe src="http://openspeedtest.com/Get-widget.php?Auto=1" id="speedtest"></iframe>
+      <!-- <iframe src="http://hstat.org" id="speedtest"></iframe> -->
+    </div>
+
+    <div class="col-md-6 tile">
+      <h1 id="date">Tickets</h1>
+    </div>
+
+  </div>
+
+  <div class="row">
+
+    <div class="col-md-6 tile">
+      <h1 id="max"></h1>
+    </div>
+
+    <div class="col-md-6 tile">
+      <img src="http://10.251.24.221/cacti/graph_image.php?action=view&local_graph_id=10208&rra_id=1" id="talker">
+    </div>
+
+  </div>
+
+
+
 
 
   <script>
 
+    // refresh every 10 minutes
+    setTimeout(function(){
+      window.location.reload(1);
+    }, 1000*60*10); 
 
+    
+
+
+    // get current date/time
+    let now = new Date(); 
+    let date = (now.getMonth()+1) +"/"+ ((now.getDate() < 10)?"0":"") + now.getDate() + "/" + now.getFullYear();
+    document.querySelector("#date").innerHTML = date;
+    
+    function getTime(){
+      var rawTime = new Date().toString();
+      // rawTime = "Fri Dec 11 2015 12:57:01 GMT-0500 (EST)"
+
+      hr = rawTime.substring(16, 18);
+      hr = parseInt(hr);
+      hr = hr % 12;
+      hr = (hr == 0 ? hr = 12 : hr).toString();
+
+      min = rawTime.substring(19, 21);
+
+      sec = rawTime.substring(22, 24);
+
+      document.querySelector("#time").innerHTML = hr + ":" + min;
+    }
+    getTime();
+    setInterval(getTime,1000*30);
+
+    // get talker max (requires Moesif CORS chrome extension)
+    $.ajax({
+      type: "GET",
+      url: 'http://schoolview.nycboe.net/principal/scripts/connect_netflow.php?rack_id=78B485&type=talker',
+      dataType: "json",
+      cache: false,
+      timeout: 50000,
+      success: function(data){
+
+        let sum = 0;
+        for(let i=0; i<data.talker.length; i++){
+          sum += parseInt(data.talker[i].octets);
+        }
+        let maxRaw = data.talker[0].octets;
+        let maxPercent = maxRaw/sum;
+        document.querySelector('#max').innerHTML = "Max: " + Math.floor(maxPercent*100) + "%";
+        if(maxPercent >= 50){
+          document.querySelector('#max').style.color = "red";
+        }
+      }
+    });
 
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
